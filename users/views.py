@@ -1,33 +1,50 @@
-from rest_framework_simplejwt.views import TokenObtainPairView
-
-from .serializers import CustomTokenObtainPairSerializer
-
-from rest_framework.decorators import api_view
+from rest_framework import generics, status
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.models import User
+
+from .models import User
+from .serializers import (
+    UserSerializer,
+    LoginSerializer,
+)
 
 
-class CustomTokenObtainPairView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainPairSerializer
+class RegisterView(generics.GenericAPIView):
+    serializer_class = UserSerializer
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
-def register(request):
-    username = request.data.get('username')
-    email = request.data.get('email')
-    password = request.data.get('password')
+class LoginView(generics.GenericAPIView):
+    serializer_class = LoginSerializer
+    permission_classes = (AllowAny,)
 
-    if not all([username, email, password]):
-        return Response({'error': 'All fields are required'})
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
 
-    # Создание пользователя
-    user = User.objects.create_user(username=username, email=email, password=password)
+        user = User.objects.filter(email=email).first()
 
-    # Генерация токена обновления
-    refresh = RefreshToken.for_user(user)
+        if user is None:
+            raise AuthenticationFailed("Incorrect email!")
 
-    return Response({
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    })
+        if not user.check_password(password):
+            raise AuthenticationFailed("Incorrect password!")
+
+        refresh = RefreshToken.for_user(user)
+
+        return Response(
+            {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            }
+        )
