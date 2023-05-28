@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cinemas', '0001_initial'),
+        ('movies', '0001_initial'),
     ]
 
     operations = [
@@ -27,12 +27,12 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('number', models.CharField(max_length=10)),
-                ('room', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cinemas.room')),
+                ('room', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='movies.room')),
             ],
         ),
         migrations.AddField(
             model_name='room',
             name='cinema',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cinemas.cinema'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='movies.cinema'),
         ),
     ]
